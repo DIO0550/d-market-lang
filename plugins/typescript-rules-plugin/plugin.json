@@ -1,0 +1,10 @@
+{
+  "name": "typescript-rules-plugin",
+  "version": "1.8.0",
+  "description": "TypeScript開発ルールプラグイン（実装ワークフロー、TDD、品質チェック、Gitワークフロー、スキルゲート）",
+  "author": {
+    "name": "DIO0550"
+  },
+  "repository": "https://github.com/DIO0550/d-market-lang",
+  "license": "MIT"
+}

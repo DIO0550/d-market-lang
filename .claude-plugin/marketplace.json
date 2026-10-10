@@ -1,0 +1,35 @@
+{
+  "name": "d-market-lang",
+  "version": "1.0.0",
+  "description": "言語・フレームワーク別（Rust / TypeScript / React）の開発ルール・ワークフロー・hooksプラグイン集",
+  "owner": {
+    "name": "DIO0550"
+  },
+  "plugins": [
+    {
+      "name": "rust-rules-plugin",
+      "source": "./plugins/rust-rules-plugin",
+      "description": "Rust開発ルールプラグイン（コーディング規約、設計ガイドライン、TDD、テスト、実装ワークフロー）"
+    },
+    {
+      "name": "rust-workflow-plugin",
+      "source": "./plugins/rust-workflow-plugin",
+      "description": "Rustワークフロープラグイン（テスト実行、型チェック、ファイル検索エージェント）"
+    },
+    {
+      "name": "rust-hooks-plugin",
+      "source": "./plugins/rust-hooks-plugin",
+      "description": "Rustファイル編集前にrust-rules-pluginの実装ルールスキル発火を強制し、編集後にcargo fmtとcargo clippyを自動実行するhooksプラグイン"
+    },
+    {
+      "name": "typescript-rules-plugin",
+      "source": "./plugins/typescript-rules-plugin",
+      "description": "TypeScript開発ルールプラグイン（実装ワークフロー、TDD、品質チェック、Gitワークフロー）"
+    },
+    {
+      "name": "react-rules-plugin",
+      "source": "./plugins/react-rules-plugin",
+      "description": "React開発ルールプラグイン（コンポーネント、カスタムフック、Storybook）"
+    }
+  ]
+}

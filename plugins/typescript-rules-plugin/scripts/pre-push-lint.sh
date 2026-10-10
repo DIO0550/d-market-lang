@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# --- stdin から Bash コマンドを取得 ---
+input="$(cat)"
+command="$(jq -r '.tool_input.command // empty' <<< "$input")"
+
+# git push 以外はスルー
+if ! echo "$command" | grep -qE '(^|\s|[;&|])\s*git\s+push\b'; then
+  exit 0
+fi
+
+# --- 指定した dep を持つ最寄りの package.json を探索 ---
+find_dep_root() {
+  local dep="$1" dir="$2"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/package.json" ] && \
+       jq -e --arg name "$dep" '(.dependencies[$name] // .devDependencies[$name]) != null' "$dir/package.json" >/dev/null 2>&1; then
+      echo "$dir"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
+diag=""
+ran_lint=false
+
+# --- oxlint (ESLint より高速な代替。両方あれば oxlint を優先) ---
+if oxlint_root="$(find_dep_root "oxlint" "$PWD")"; then
+  if ! result="$(cd "$oxlint_root" && pnpm exec oxlint 2>&1)"; then
+    diag="${diag}[oxlint]
+${result}
+
+"
+  fi
+  ran_lint=true
+fi
+
+# --- ESLint (oxlint が無い場合のフォールバック) ---
+if [ "$ran_lint" = false ]; then
+  if eslint_root="$(find_dep_root "eslint" "$PWD")"; then
+    if ! result="$(cd "$eslint_root" && pnpm exec eslint . 2>&1)"; then
+      diag="${diag}[eslint]
+${result}
+
+"
+    fi
+  fi
+fi
+
+# --- Biome (フォーマッター + リンター) ---
+if biome_root="$(find_dep_root "@biomejs/biome" "$PWD")"; then
+  if ! result="$(cd "$biome_root" && pnpm exec biome check . 2>&1)"; then
+    diag="${diag}[biome]
+${result}
+
+"
+  fi
+fi
+
+# --- エラーがあれば push をブロックし、内容を AI にフィードバック ---
+if [ -n "$diag" ]; then
+  jq -Rn --arg msg "$diag" '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: ("push 前の全体 lint でエラーが検出されたため push をブロックしました。以下の lint エラーをすべて修正してから再度 push してください。\n\n" + $msg)
+    }
+  }'
+fi
